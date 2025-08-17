@@ -1,4 +1,4 @@
-import { Skeleton, Stack, Typography } from "@mui/material";
+import { Skeleton, Stack, Typography, Collapse, Box } from "@mui/material";
 import { useAtomValue } from "jotai";
 import { boardAtom, currentPositionAtom } from "../../states";
 import { useMemo } from "react";
@@ -6,10 +6,12 @@ import { moveLineUciToSan } from "@/lib/chess";
 import { MoveClassification } from "@/types/enums";
 import Image from "next/image";
 import PrettyMoveSan from "@/components/prettyMoveSan";
+import { useExplanations } from "@/hooks/useExplanations";
 
 export default function MoveInfo() {
   const position = useAtomValue(currentPositionAtom);
   const board = useAtomValue(boardAtom);
+  const { currentMoveExplanation } = useExplanations();
 
   const bestMove = position?.lastEval?.bestMove;
 
@@ -51,62 +53,107 @@ export default function MoveInfo() {
     moveClassification !== MoveClassification.Perfect;
 
   return (
-    <Stack
-      direction="row"
-      alignItems="center"
-      justifyContent="center"
-      columnGap={4}
-      marginTop={0.5}
-      flexWrap="wrap"
-    >
-      {moveClassification && (
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Image
-            src={`/icons/${moveClassification}.png`}
-            alt="move-icon"
-            width={16}
-            height={16}
-            style={{
-              maxWidth: "3.5vw",
-              maxHeight: "3.5vw",
-            }}
-          />
+    <Stack spacing={1}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="center"
+        columnGap={4}
+        marginTop={0.5}
+        flexWrap="wrap"
+      >
+        {moveClassification && (
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Image
+              src={`/icons/${moveClassification}.png`}
+              alt="move-icon"
+              width={16}
+              height={16}
+              style={{
+                maxWidth: "3.5vw",
+                maxHeight: "3.5vw",
+              }}
+            />
 
-          <PrettyMoveSan
-            typographyProps={{
-              fontSize: "0.9rem",
-            }}
-            san={position.lastMove?.san ?? ""}
-            color={position.lastMove?.color ?? "w"}
-            additionalText={
-              " is " + moveClassificationLabels[moveClassification]
-            }
-          />
-        </Stack>
-      )}
+            <PrettyMoveSan
+              typographyProps={{
+                fontSize: "0.9rem",
+              }}
+              san={position.lastMove?.san ?? ""}
+              color={position.lastMove?.color ?? "w"}
+              additionalText={
+                " is " + moveClassificationLabels[moveClassification]
+              }
+            />
+          </Stack>
+        )}
 
-      {showBestMoveLabel && (
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Image
-            src={"/icons/best.png"}
-            alt="move-icon"
-            width={16}
-            height={16}
-            style={{
-              maxWidth: "3.5vw",
-              maxHeight: "3.5vw",
-            }}
-          />
-          <PrettyMoveSan
-            typographyProps={{
-              fontSize: "0.9rem",
-            }}
-            san={bestMoveSan}
-            color={position.lastMove?.color ?? "w"}
-            additionalText=" was the best move"
-          />
-        </Stack>
-      )}
+        {showBestMoveLabel && (
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Image
+              src={"/icons/best.png"}
+              alt="move-icon"
+              width={16}
+              height={16}
+              style={{
+                maxWidth: "3.5vw",
+                maxHeight: "3.5vw",
+              }}
+            />
+            <PrettyMoveSan
+              typographyProps={{
+                fontSize: "0.9rem",
+              }}
+              san={bestMoveSan}
+              color={position.lastMove?.color ?? "w"}
+              additionalText=" was the best move"
+            />
+          </Stack>
+        )}
+      </Stack>
+
+      {/* Move Explanation Display */}
+      <Collapse in={!!currentMoveExplanation}>
+        {currentMoveExplanation && (
+          <Box
+            sx={(theme) => ({
+              backgroundColor:
+                theme.palette.mode === "dark" ? "#2a2a2a" : "#f5f5f5",
+              border: `1px solid ${
+                theme.palette.mode === "dark" ? "#444" : "#ddd"
+              }`,
+              borderRadius: 1,
+              padding: 1.5,
+              marginTop: 1,
+            })}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                fontSize: "0.85rem",
+                lineHeight: 1.4,
+                fontStyle: "italic",
+              }}
+            >
+              {currentMoveExplanation.explanation}
+            </Typography>
+
+            {currentMoveExplanation.themes.length > 0 && (
+              <Box sx={{ marginTop: 1 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: "0.75rem",
+                    opacity: 0.7,
+                  }}
+                >
+                  Themes: {currentMoveExplanation.themes.join(", ")}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        )}
+      </Collapse>
     </Stack>
   );
 }

@@ -2,6 +2,7 @@ import { DEFAULT_ENGINE } from "@/constants";
 import { getRecommendedWorkersNb } from "@/lib/engine/worker";
 import { EngineName } from "@/types/enums";
 import { CurrentPosition, GameEval, SavedEvals } from "@/types/eval";
+import { GameExplanations } from "@/types/explanation";
 import { Chess } from "chess.js";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
@@ -25,3 +26,7 @@ export const engineWorkersNbAtom = atomWithStorage(
 export const evaluationProgressAtom = atom(0);
 
 export const savedEvalsAtom = atom<SavedEvals>({});
+
+export const gameExplanationsAtom = atom<GameExplanations | undefined>(
+  undefined
+);

@@ -3,6 +3,7 @@ import { Grid2 as Grid, Typography } from "@mui/material";
 import GamePanel from "./gamePanel";
 import LoadGame from "./loadGame";
 import AnalyzeButton from "./analyzeButton";
+import ExplainButton from "./explainButton";
 import LinearProgressBar from "@/components/LinearProgressBar";
 import { useAtomValue } from "jotai";
 import { evaluationProgressAtom } from "../states";
@@ -43,6 +44,7 @@ export default function PanelHeader() {
         <GamePanel />
         <LoadGame />
         <AnalyzeButton />
+        <ExplainButton />
         <LinearProgressBar value={evaluationProgress} label="Analyzing..." />
       </Grid>
     </Grid>

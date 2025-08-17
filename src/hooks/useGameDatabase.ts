@@ -1,6 +1,7 @@
 import { formatGameToDatabase } from "@/lib/chess";
 import { GameEval } from "@/types/eval";
 import { Game } from "@/types/game";
+import { GameExplanations } from "@/types/explanation";
 import { Chess } from "chess.js";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import { atom, useAtom } from "jotai";
@@ -11,6 +12,10 @@ interface GameDatabaseSchema extends DBSchema {
   games: {
     value: Game;
     key: number;
+  };
+  explanations: {
+    value: GameExplanations;
+    key: number; // gameId
   };
 }
 
@@ -31,9 +36,17 @@ export const useGameDatabase = (shouldFetchGames?: boolean) => {
 
   useEffect(() => {
     const initDatabase = async () => {
-      const db = await openDB<GameDatabaseSchema>("games", 1, {
-        upgrade(db) {
-          db.createObjectStore("games", { keyPath: "id", autoIncrement: true });
+      const db = await openDB<GameDatabaseSchema>("games", 2, {
+        upgrade(db, oldVersion) {
+          if (oldVersion < 1) {
+            db.createObjectStore("games", {
+              keyPath: "id",
+              autoIncrement: true,
+            });
+          }
+          if (oldVersion < 2) {
+            db.createObjectStore("explanations", { keyPath: "gameId" });
+          }
         },
       });
       setDb(db);
@@ -95,10 +108,30 @@ export const useGameDatabase = (shouldFetchGames?: boolean) => {
       if (!db) throw new Error("Database not initialized");
 
       await db.delete("games", gameId);
+      // Also delete explanations for this game
+      await db.delete("explanations", gameId);
 
       loadGames();
     },
     [db, loadGames]
+  );
+
+  const setGameExplanations = useCallback(
+    async (explanations: GameExplanations) => {
+      if (!db) throw new Error("Database not initialized");
+
+      await db.put("explanations", explanations);
+    },
+    [db]
+  );
+
+  const getGameExplanations = useCallback(
+    async (gameId: number) => {
+      if (!db) return undefined;
+
+      return db.get("explanations", gameId);
+    },
+    [db]
   );
 
   const router = useRouter();
@@ -123,6 +156,8 @@ export const useGameDatabase = (shouldFetchGames?: boolean) => {
     setGameEval,
     getGame,
     deleteGame,
+    setGameExplanations,
+    getGameExplanations,
     games,
     isReady,
     gameFromUrl,
